@@ -34,8 +34,8 @@ void *_BTree_malloc(size_t Size)
 
 	if ((P = malloc(Size + sizeof(size_t))) == NULL){
 	  BTree_log(
-	   "BTree_malloc(): error:"
-	   "memory allocation error(total=%d bytes)\n",
+	   "BTree_malloc(): "
+	   "error: memory allocation error(total=%d bytes)\n",
 	   BTree_MallocTotal);
 	  BTree_exit(1);
 	}
