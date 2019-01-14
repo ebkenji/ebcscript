@@ -1,4 +1,4 @@
-﻿/*******************************************************************************
+/*******************************************************************************
    Project : C script
    File    : init.c
    Date    : 2018.7.19-
@@ -10,6 +10,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include "parser.h"
+#include "trnsunit.h"
 #include "name.h"
 #include "code.h"
 #include "init.h"
