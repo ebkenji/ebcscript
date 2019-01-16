@@ -4,8 +4,7 @@ CC      := gcc
 CFLAGS  := -c
 RM      := rm -f
 TARGET  := ebcscrip.a
-OBJS    := ebcscrip.o trnsunit.o parser.o decl.o expr.o init.o stmt.o \
-	parse.tab.o lex.yy.o name.o code.o hashmap.o btree.o slist.o
+OBJS    := ebcscrip.o trnsunit.o parser.o decl.o expr.o init.o stmt.o parse.tab.o lex.yy.o name.o code.o hashmap.o btree.o slist.o
 
 $(TARGET): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $?
