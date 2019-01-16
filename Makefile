@@ -21,7 +21,7 @@ parser.o: parser.c parser.h trnsunit.h stmt.h name.h code.h slist.h hashmap.h
 decl.o: decl.c decl.h parser.h name.h
 	$(CC) $(CFLAGS) $<
 
-expr.o: expr.c expr.h parser.h trnsunit.h name.h code.h btree.h boolean.h
+expr.o: expr.c expr.h stmt.h parser.h trnsunit.h name.h code.h btree.h boolean.h
 	$(CC) $(CFLAGS) $<
 
 init.o: init.c init.h expr.h parser.h trnsunit.h name.h code.h btree.h slist.h
