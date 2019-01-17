@@ -12,7 +12,7 @@ $(TARGET): $(OBJS)
 ebcscrip.o: ebcscrip.c ebcscrip.h trnsunit.h parser.h decl.h expr.h init.h stmt.h name.h code.h hashmap.h slist.h btree.h boolean.h
 	$(CC) $(CFLAGS) $<
 
-trnsunit.o: trnsunit.c trnsunit.h name.h code.h slist.h hashmap.h
+trnsunit.o: trnsunit.c trnsunit.h name.h code.h slist.h hashmap.h boolean.h
 	$(CC) $(CFLAGS) $<
 
 parser.o: parser.c parser.h trnsunit.h stmt.h name.h code.h slist.h hashmap.h
