@@ -95,7 +95,7 @@ struct ebcscript_parser_expression {
 
 	  struct {
 	    ebcscript_parser_expression *Child;
-	    btree/*<expression *>*/ *Arguments;
+	    btree/*<ebcscript_parser_expression *>*/ *Arguments;
 	  } Func;
 
 	  struct {
