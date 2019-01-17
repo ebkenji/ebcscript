@@ -85,7 +85,6 @@ void Ebcscript_Parser_pushBlockstack(
 {
 	BS->Prev = Prs->BS; Prs->BS = BS;
 
-/*	BS->TU = Prs->TU;*/
 	BS->Nest = Prs->Nest;
 }
 
