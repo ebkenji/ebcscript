@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include "parser.h"
 #include "trnsunit.h"
 #include "stmt.h"
@@ -1191,7 +1192,7 @@ void Ebcscript_Parser_gencode_expr_rv(
 	    gencode_op_numeric_ptr(NE, E->As.LogAnd.Right->TypeTree)
 
 	    *(void **)((ptrdiff_t)P + Prs->TU->Code) =
-	                                              (void *)(Prs->TU->CP - P);
+	                   (void *)(Prs->TU->CP - Prs->TU->Code - (ptrdiff_t)P);
 	    break;
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_LOG_OR:	/* || */
 	    /* Left != 0 */
@@ -1214,7 +1215,7 @@ void Ebcscript_Parser_gencode_expr_rv(
 	    gencode_op_numeric_ptr(NE, E->As.LogOr.Right->TypeTree)
 
 	    *(void **)((ptrdiff_t)P + Prs->TU->Code) =
-	                                              (void *)(Prs->TU->CP - P);
+	                   (void *)(Prs->TU->CP - Prs->TU->Code - (ptrdiff_t)P);
 	    break;
 
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_COND:	/* ? */
@@ -1232,11 +1233,11 @@ void Ebcscript_Parser_gencode_expr_rv(
 	    store_address(NULL)
 
 	    *(void **)((ptrdiff_t)P1 + Prs->TU->Code) =
-	                                             (void *)(Prs->TU->CP - P1);
+	                  (void *)(Prs->TU->CP - Prs->TU->Code - (ptrdiff_t)P1);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Cond.Right);
 
 	    *(void **)((ptrdiff_t)P2 + Prs->TU->Code) =
-	                                             (void *)(Prs->TU->CP - P2);
+	                  (void *)(Prs->TU->CP - Prs->TU->Code - (ptrdiff_t)P2);
 	    break;
 
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_ASSGN:	/* = */
