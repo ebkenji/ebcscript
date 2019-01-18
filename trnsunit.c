@@ -675,7 +675,7 @@ void Ebcscript_Trnsunit_dumpCode(ebcscript_trnsunit *TU)
 
 	    default:
 	      fprintf(Ebcscript_Trnsunit_Fplog,
-	       "???(%d)", *(ebcscript_instruction *)CP);
+	       "\?\?\?(%d)", *(ebcscript_instruction *)CP);
 	      CP += sizeof(ebcscript_instruction);
 	      break;
 	  }
