@@ -39,6 +39,21 @@ extern void (*Hashmap_free)(void *);
 extern void (*Hashmap_exit)(int);
 extern void (*Hashmap_log)(const char *Fmt, ...);
 
+/*                                                                 マクロ定義 */
+/* -------------------------------------------------------------------------- */
+#define Hashmap_foreach(M, V, Action)					\
+{									\
+	int I;								\
+	hashmap_entry *E;						\
+	for (I = 0; I < M->TableSize; I++) {				\
+	  if ((E = M->Table[I]) != HASHMAP_ENTRY_EMPTY			\
+	                   && E != HASHMAP_ENTRY_REMOVED) {		\
+	    V = E->Value;						\
+	    Action;							\
+	  }								\
+	}								\
+}
+
 /*                                                                   関数宣言 */
 /* -------------------------------------------------------------------------- */
 void Hashmap_onexit(void);
