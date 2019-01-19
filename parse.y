@@ -3793,6 +3793,9 @@ pointer
 type_qualifier_list
 	: type_qualifier
 	| type_qualifier_list type_qualifier
+	{
+	  $2;	/* warningを消すため */
+	}
 	;
 
 parameter_type_list
