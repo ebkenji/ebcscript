@@ -828,74 +828,6 @@ void Ebcscript_execute(ebcscript *Env)
 #undef case_jump_f
 }
 
-boolean xEbcscript_addTrnsunit(ebcscript *Env, char *Filename)
-{
-	extern FILE *yyin;
-	extern int Ebcscript_Parser_yyparse(ebcscript_parser *);
-	ebcscript_trnsunit *TU;
-
-	TU = Ebcscript_newTrnsunit(Filename);
-	{
-	  ebcscript_parser *Prs;
-	  ebcscript_parser_blockstack *BS;
-
-	  /* 作業用変数の初期化 */
-	  Prs = Ebcscript_newParser(Filename);
-	  Prs->TU = TU;
-	  Prs->TU->CP = Prs->TU->Code;
-	  Prs->BS = NULL;	/* 末尾 */
-	  Prs->Nest = 0;
-	  Prs->AnonymousNum = 0;
-	  Prs->Stack = Env->Stack;
-
-	  BS = Ebcscript_Parser_newBlockstack_trnsunit();
-	  Ebcscript_Parser_pushBlockstack(Prs, BS);
-
-	  BS->As.Trnsunit.TU = TU;
-
-	  /* 構文解析の実行 */
-	  if ((yyin = fopen(Filename, "r")) == NULL) {
-	    Ebcscript_log(
-	     "Ebcscript_addTrnsunit(): error: can't open \"%s\"\n", Filename);
-	    Ebcscript_exit(1);
-	    Ebcscript_deleteParser(Prs);
-	    Ebcscript_deleteTrnsunit(TU);
-	  }
-
-	  if (Ebcscript_Parser_yyparse(Prs)) {
-	    Ebcscript_log(
-	     "Ebcscript_addTrnsunit(): error: failed to parse \"%s\"\n",
-	     Filename);
-	    Ebcscript_exit(1);
-	    Ebcscript_deleteParser(Prs);
-	    Ebcscript_deleteTrnsunit(TU);
-	  }
-
-	  Ebcscript_Parser_resolve_trnsunit(Prs, BS);
-
-	  BS = Ebcscript_Parser_popBlockstack(Prs);
-	  Ebcscript_Parser_deleteBlockstack(BS);
-
-	  fclose(yyin);
-	  Ebcscript_deleteParser(Prs);
-	}
-	SList_addFront(Env->Trnsunits, (void *)TU);
-
-	/* バックパッチ */
-	if (!Ebcscript_Trnsunit_resolve(TU)) {
-	  Ebcscript_log(
-	   "Ebcscript_addTrnsunit(): error: failed to parse \"%s\"\n",
-	   Filename);
-	  Ebcscript_exit(1);
-	  Ebcscript_deleteTrnsunit(TU);
-	}
-
-	/* 名前の再解決を要求 */
-	Env->IsResolved = false;
-
-	return true;
-}
-
 boolean Ebcscript_addTrnsunit(ebcscript *Env, char *Filename)
 {
 	extern FILE *yyin;
@@ -1294,18 +1226,18 @@ int main(int argc, char *argv[])
 
 	Ebcscript_dump(Env);
 
-	/* I = f(2) */
+	/* I = f(N) */
 	{
-	  int I = 0;
+	  int I = 0, N = 5;
 
 	  Ebcscript_sub_sp(Env, sizeof(int));
-	  Ebcscript_push_int(Env, 5);
+	  Ebcscript_push_int(Env, N);
 
 	  Ebcscript_call(Env, "f");
 
 	  Ebcscript_add_sp(Env, sizeof(int));
 	  Ebcscript_pop_int(Env, &I);
-	  printf("f(2) = %d\n", I);
+	  printf("f(N) = %d\n", I);
 	}
 
 	Ebcscript_removeTrnsunit(Env, argv[1]);
