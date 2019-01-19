@@ -2,7 +2,7 @@
 /*******************************************************************************
    Project : C script
    File    : parse.y
-   Date    : 
+   Date    : 2018.3.24-
    Note    : 構文解析しながら、
              (1)記号表の作成、
              (2)意味チェック、
@@ -25,7 +25,7 @@
 #include "slist.h"
 #include "hashmap.h"
 
-int yylex(ebcscript_parser *Prs);
+int Ebcscript_Parser_yylex(ebcscript_parser *Prs);
 static void yyerror(ebcscript_parser *Prs, const char *S);
 
 /*                                                                 マクロ定義 */

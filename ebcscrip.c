@@ -212,7 +212,7 @@ void Ebcscript_sub_sp(ebcscript *Env, int I)
 static
 void Ebcscript_execute(ebcscript *Env)
 {
-	typedef void *address;	/* マクロ内でpush, pop関数名を生成するため */
+	typedef void * address;	/* マクロ内でpush, pop関数名を生成するため */
 	typedef unsigned char uchar;
 	typedef unsigned short ushort;
 	typedef unsigned int uint;
@@ -849,7 +849,8 @@ boolean Ebcscript_addTrnsunit(ebcscript *Env, char *Filename)
 	  /* 作業用変数の初期化 */
 	  Prs = Ebcscript_newParser(Filename);
 	  Prs->TU = TU;
-	  Prs->TU->CP = Prs->TU->Code;
+	  Prs->TU->CP = Prs->TU->Code + sizeof(ebcscript_instruction);
+				/* 相対アドレス0はNULL値として用いるため */
 	  Prs->BS = NULL;	/* 末尾 */
 	  Prs->Nest = 0;
 	  Prs->AnonymousNum = 0;
@@ -934,11 +935,38 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	ebcscript_unresolved *UR;
 	ebcscript_name **N0;
 	void *Address;
-	int Addressing, Linkage;
+	int Addressing;
 	boolean B, IsFound;
 	slist_cell *P, *Q, *R;
 
 	B = true;
+
+	/* 名前の一意性のチェック */
+	for (P = Env->Trnsunits->Head.Next; P != NULL; P = P->Next) {
+	  ebcscript_name *N;
+
+	  TU = (ebcscript_trnsunit *)P->Datum;
+
+	  Hashmap_foreach(TU->NSVarFuncTypeEnum, N, {
+	    for (R = Env->Trnsunits->Head.Next; R != NULL; R = R->Next) {
+	      TU1 = (ebcscript_trnsunit *)R->Datum;
+
+	      if (TU == TU1)
+	        continue;
+
+	      if (Ebcscript_Trnsunit_findVarFuncTypeEnum_global(TU1,
+	                                                       N->Identifier)) {
+	        Ebcscript_log(
+	         "Ebcscript_resolve(): error: "
+	         "the definition of name \'%s\' used in \"%s\" exists "
+	         "more than once\n",
+	         N->Identifier, TU->Filename);
+	        B &= false;
+	      }
+	    }
+	  })
+	}
+
 	/* 全翻訳単位の未解決リストに対して */
 	for (P = Env->Trnsunits->Head.Next; P != NULL; P = P->Next) {
 	  TU = (ebcscript_trnsunit *)P->Datum;
@@ -1039,7 +1067,7 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	        Addressing = (*N0)->As.Variable.Addressing;
 	        break;
 	      case EBCSCRIPT_NAME_KIND_FUNCTION:
-	        Address    = (*N0)->As.Function.CodeAddress;
+	        Address    = (*N0)->As.Function.CodeAddress;/* 絶対化済み */
 	        Addressing = (*N0)->As.Function.Addressing;
 	        break;
 	      default:
@@ -1047,12 +1075,16 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	    }
 
 	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_UNDEFINED) {
+	      /* 上のTrnsunit_find()でNULLが返されるのでスキップされている */
 	    }
 	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE) {
-	      *(void **)((ptrdiff_t)UR->CP + TU->Code) = Address;
+	      *(void **)UR->CP = Address;	/* UR->CPは絶対化済み */
 	    }
 	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
-	      *(void **)((ptrdiff_t)UR->CP + TU->Code) = Address;
+	      *(void **)UR->CP = Address;	/* UR->CPは絶対化済み */
+	    }
+	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONCODE) {
+	      /* Trnsunit_resolve()でABSOLUTEに変更済み */
 	    }
 	  }
 	}
