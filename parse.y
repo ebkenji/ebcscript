@@ -2881,7 +2881,7 @@ init_declarator_list
 	    for (P = $1; P->Right != NULL; P = P->Right)
 	      ;
 	    P->Right = $3;
-	    $$ = $1
+	    $$ = $1;
 	  }
 	;
 
