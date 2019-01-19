@@ -26,7 +26,7 @@ $ ./example
 ## Usage
 See the file "example.c".
 
-[example.c]
+example.c:
 ```
 #include <stdio>
 #include "ebcscrip.h"
@@ -58,7 +58,7 @@ int main(void)
 }
 ```
 
-[factoria.c]
+factoria.c:
 ```
 int factorial(char n)
 {
@@ -67,8 +67,9 @@ int factorial(char n)
 ```
 
 ## To Do
-- Preprocessing directives: #include, #define, #ifdef
+- Preprocessing directives: #include, #define and #ifdef
 - A function that accepts a variable number of arguments
+- Invoking a host program function from a scripting
 
 ## License
 Ebcscript is licensed under the MIT license.
