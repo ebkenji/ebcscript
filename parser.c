@@ -245,6 +245,12 @@ ebcscript_parser *Ebcscript_newParser(char *Filename)
 
 void Ebcscript_deleteParser(ebcscript_parser *Parser)
 {
+	ebcscript_parser_blockstack *BS;
+
+	while (Parser->BS != NULL) {
+	  BS = Ebcscript_Parser_popBlockstack(Parser);
+	  Ebcscript_Parser_deleteBlockstack(BS);
+	}
 	Ebcscript_Parser_free(Parser->Filename);
 	Ebcscript_Parser_free(Parser);
 	return;
