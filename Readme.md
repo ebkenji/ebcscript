@@ -27,7 +27,7 @@ $ ./example
 See the file "example.c".
 
 example.c:
-``` c
+```
 #include <stdio>
 #include "ebcscrip.h"
 
@@ -59,7 +59,7 @@ int main(void)
 ```
 
 factoria.c:
-``` c
+```
 int factorial(char n)
 {
   return (n <= 1) ? 1 : n * factorial(n - 1);
