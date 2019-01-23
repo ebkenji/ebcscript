@@ -212,7 +212,7 @@ void Ebcscript_sub_sp(ebcscript *Env, int I)
 static
 void Ebcscript_execute(ebcscript *Env)
 {
-	typedef void *address;	/* マクロ内でpush, pop関数名を生成するため */
+	typedef void * address;	/* マクロ内でpush, pop関数名を生成するため */
 	typedef unsigned char uchar;
 	typedef unsigned short ushort;
 	typedef unsigned int uint;
