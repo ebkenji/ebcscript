@@ -25,7 +25,7 @@
 #include "slist.h"
 #include "hashmap.h"
 
-int yylex(ebcscript_parser *Prs);
+int Ebcscript_Parser_yylex(ebcscript_parser *Prs);
 static void yyerror(ebcscript_parser *Prs, const char *S);
 
 /*                                                                 マクロ定義 */
