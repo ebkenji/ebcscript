@@ -28,7 +28,7 @@ See the file "example.c".
 
 example.c:
 ```
-#include <stdio>
+#include <stdio.h>
 #include "ebcscrip.h"
 
 int main(void)
