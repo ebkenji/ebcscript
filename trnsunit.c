@@ -142,11 +142,6 @@ void *Ebcscript_Trnsunit_mallocG(ebcscript_trnsunit *TU, size_t Size)
 	return P;
 }
 
-void *Ebcscript_Trnsunit_getCPOffset(ebcscript_trnsunit *TU)
-{
-	return (void *)(TU->CP - TU->Code);
-}
-
 static
 void resizeCode(ebcscript_trnsunit *TU)
 {
@@ -209,6 +204,7 @@ void Ebcscript_Trnsunit_store_address_n(ebcscript_trnsunit *TU,
 	    Addressing = N->As.Variable.Addressing;
 	    break;
 	  case EBCSCRIPT_NAME_KIND_FUNCTION:
+	    /* 関数のアドレスは必ずバックパッチする */
 	    Address    = N->As.Function.CodeAddress;
 	    Addressing = N->As.Function.Addressing;
 	    break;
@@ -234,6 +230,8 @@ void Ebcscript_Trnsunit_store_address_n(ebcscript_trnsunit *TU,
 	}
 	if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE) {
 	  Ebcscript_Trnsunit_store_address(TU, Address);
+	}
+	if (Addressing == EBCSCRIPT_NAME_ADDRESSING_FUNCTIONID) {
 	}
 	if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
 	  Ebcscript_Trnsunit_store_address(TU, Address);
@@ -326,7 +324,10 @@ boolean Ebcscript_Trnsunit_resolve(ebcscript_trnsunit *TU)
 	      if (N->As.Function.Addressing ==
 	                                     EBCSCRIPT_NAME_ADDRESSING_ONCODE) {
 	        N->As.Function.CodeAddress += (ptrdiff_t)TU->Code;
-	        N->As.Function.Addressing = EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE;
+/*	        N->As.Function.Addressing =
+	                                   EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE;*/
+	        N->As.Function.Addressing =
+	                                 EBCSCRIPT_NAME_ADDRESSING_FUNCTIONID;
 	      }
 	      break;
 	    case EBCSCRIPT_NAME_KIND_VARIABLE:
@@ -424,6 +425,10 @@ boolean Ebcscript_Trnsunit_resolve(ebcscript_trnsunit *TU)
 	    Q->Next = P->Next; deleteSListCell(P);
 
 	    P = Q;
+	    continue;
+	  }
+	  if (Addressing == EBCSCRIPT_NAME_ADDRESSING_FUNCTIONID) {
+	    /* 関数アドレスはEnv.resolve()でバックパッチする */
 	    continue;
 	  }
 	  if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
