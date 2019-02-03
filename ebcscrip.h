@@ -14,6 +14,7 @@
 #include "slist.h"
 #include "name.h"
 #include "code.h"
+#include "functbl.h"
 
 /*                                                                   定数定義 */
 /* -------------------------------------------------------------------------- */
@@ -24,8 +25,9 @@
 typedef struct ebcscript ebcscript;
 struct ebcscript {
 	slist/*<ebcscript_transunit *>*/ *Trnsunits;
-/*	trnsunit *Native;*/
+	ebcscript_trnsunit *TUNative;
 	boolean IsResolved;	/* 全翻訳単位の名前解決済み */
+	ebcscript_functionmap *FMap;
 
 	/* 実行時の作業用 */
 	void *CP;
@@ -64,6 +66,19 @@ boolean Ebcscript_call(ebcscript *Env, char *FuncName);
 
 /* 変数参照 */
 void *Ebcscript_address(ebcscript *Env, char *VarName);
+
+/* ネイティブ変数・関数の登録 */
+boolean Ebcscript_addVariable(ebcscript *Env,
+ char *VarName,  ebcscript_type *Type, void *Address);
+boolean Ebcscript_addFunction(ebcscript *Env,
+ char *FuncName, ebcscript_type *Type, void *Address, void *Mediator);
+
+boolean Ebcscript_removeVariable(ebcscript *Env, char *VarName);
+boolean Ebcscript_removeFunction(ebcscript *Env, char *FuncName);
+
+/* スクリプト関数呼出しの代行関数を設定 */
+boolean Ebcscript_bindFunction(ebcscript *Env,
+ char *Filename, char *FuncName, void *Mediator);
 
 /* スタック操作 */
 void Ebcscript_push_char(ebcscript *Env, char C);
