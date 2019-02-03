@@ -1028,9 +1028,9 @@ boolean Ebcscript_Type_equals(ebcscript_type *T1, ebcscript_type *T2)
 	    return Ebcscript_Type_equals(T1->As.Pointer.Value,
 	                                                T2->As.Pointer.Value);
 	  case EBCSCRIPT_TYPE_KIND_ARRAY:
-	    return T1->As.Array.Size == T2->As.Array.Size
-	     && Ebcscript_Type_equals(T1->As.Array.Value,
-	                                                  T2->As.Array.Value);
+	    return /*T1->As.Array.Length == T2->As.Array.Length && */
+								/* 2019.2.2 */
+	     Ebcscript_Type_equals(T1->As.Array.Value, T2->As.Array.Value);
 	  case EBCSCRIPT_TYPE_KIND_STRUCT:
 	    /* 全メンバの型が一致していても無名ならfalse */
 	    /* 無名かどうかの判定は今のところ不可能 */
@@ -1270,6 +1270,58 @@ ebcscript_type *Ebcscript_Type_balance_integer(ebcscript_type *T1,
 	    return Ebcscript_Type_rankToType(R);
 }
 
+ebcscript_type *Ebcscript_makeType_function(
+                                  ebcscript_type *ReturnValue, int NParam, ...)
+{
+	va_list Args;
+	ebcscript_type *TF, *T, *T1;
+	ebcscript_name *N;
+	char StrParam[11] = "$";
+	int I;
+
+	TF = Ebcscript_newType_function();
+	TF->As.Function.ReturnValue = ReturnValue;
+
+	va_start(Args, NParam);
+	for (I = 0; I < NParam; I++) {
+	  T = va_arg(Args, ebcscript_type *);
+
+	  /* 関数の場合、ポインタを挟んで変数にする */
+	  if (T->Kind == EBCSCRIPT_TYPE_KIND_FUNCTION) {
+	    T1 = Ebcscript_newType_pointer();
+	    T1->As.Pointer.Value = T;
+	    T = T1;
+	  }
+
+	  /* 仮の引数名 */
+	  sprintf(StrParam, "$%d", I);
+	  N = Ebcscript_newName_variable(StrParam);
+	  N->As.Variable.TypeTree = T;
+
+	  Ebcscript_Type_Function_addParameter(&TF->As.Function, N);
+	}
+	va_end(Args);
+	return TF;
+}
+
+ebcscript_type *Ebcscript_makeType_pointer(ebcscript_type *Value)
+{
+	ebcscript_type *T;
+
+	T = Ebcscript_newType_pointer();
+	T->As.Pointer.Value = Value;
+	return T;
+}
+
+ebcscript_type *Ebcscript_makeType_array(ebcscript_type *Value)
+{
+	ebcscript_type *T;
+
+	T = Ebcscript_newType_array();
+	T->As.Array.Value = Value;
+	return T;
+}
+
 void Ebcscript_Type_print(ebcscript_type *T)
 {
 	switch (T->Kind) {
@@ -1413,6 +1465,21 @@ ebcscript_name *Ebcscript_newName_enumerator(char *Name)
 	return P;
 }
 
+ebcscript_name *Ebcscript_newName_function(char *Name)
+{
+	ebcscript_name *P;
+
+	P = Ebcscript_newName(Name);
+	P->Kind = EBCSCRIPT_NAME_KIND_FUNCTION;
+	P->As.Function.TypeTree = NULL;
+	P->As.Function.CodeAddress = NULL;
+	P->As.Function.Addressing = EBCSCRIPT_NAME_ADDRESSING_UNDEFINED;
+	P->As.Function.Linkage = EBCSCRIPT_NAME_LINKAGE_EXTERNAL;
+	P->As.Function.FunctionID = NULL;
+	return P;
+}
+
+
 void Ebcscript_deleteName(ebcscript_name *N)
 {
 	if (N == NULL)
@@ -1480,6 +1547,7 @@ ebcscript_name *Ebcscript_Name_dup(ebcscript_name *N0)
 	    N->As.Function.CodeAddress = N0->As.Function.CodeAddress;
 	    N->As.Function.Addressing  = N0->As.Function.Addressing;
 	    N->As.Function.Linkage     = N0->As.Function.Linkage;
+	    N->As.Function.FunctionID  = N0->As.Function.FunctionID;
 	    N->As.Function.TypeTree =
 	                           Ebcscript_Type_dup(N0->As.Function.TypeTree);
 	    break;
@@ -1605,7 +1673,8 @@ void Ebcscript_Name_fixKind(ebcscript_name *N)
 
 void Ebcscript_Name_print(ebcscript_name *N)
 {
-	static char *SA[] = {"UNDEFINED", "ABSOLUTE", "ONSTACKFRAME", "ONCODE"};
+	static char *SA[] = {
+	       "UNDEFINED", "ABSOLUTE", "FUNCTIONID", "ONSTACKFRAME", "ONCODE"};
 	static char *SL[] = {"NOLINK", "EXTERNAL", "INTERNAL"};
 
 	fprintf(Ebcscript_Name_Fplog, "Name: %s\n", N->Identifier);
@@ -1634,9 +1703,11 @@ void Ebcscript_Name_print(ebcscript_name *N)
 	    fprintf(Ebcscript_Name_Fplog,
 	     " Kind: function\n"
 	     " CodeAddress: %p\n"
+	     " FunctionID: %p\n"
 	     " Addressing: %s\n"
 	     " Linkage: %s\n",
 	     N->As.Function.CodeAddress,
+	     N->As.Function.FunctionID,
 	     SA[N->As.Function.Addressing],
 	     SL[N->As.Function.Linkage]
 	    );
