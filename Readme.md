@@ -1,5 +1,5 @@
 # Ebcscript
-A simple C library for interpreting and executing C sources.
+A simple C library for interpreting C sources.
 
 ## Description
 Ebcscript is a library which adds a function of C interpreter for your C program.
@@ -24,9 +24,9 @@ $ ./example
 ```
 
 ## Usage
-See the file "example.c".
+See the file "example1.c".
 
-example.c:
+example1.c:
 ```
 #include <stdio.h>
 #include "ebcscrip.h"
@@ -69,7 +69,6 @@ int factorial(char n)
 ## To Do
 - Preprocessing directives: #include, #define and #ifdef
 - A function that accepts a variable number of arguments
-- Invoking a host program function from a scripting
 
 ## License
 Ebcscript is licensed under the MIT license.
