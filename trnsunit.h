@@ -62,8 +62,6 @@ void Ebcscript_deleteTrnsunit(ebcscript_trnsunit *);
 
 void *Ebcscript_Trnsunit_mallocG(ebcscript_trnsunit *, size_t);
 
-void *Ebcscript_Trnsunit_getCPOffset(ebcscript_trnsunit *);
-
 /* 中間コード領域を1024バイト増やす */
 void Ebcscript_Trnsunit_resizeCode(ebcscript_trnsunit *);
 void Ebcscript_Trnsunit_dumpCode(ebcscript_trnsunit *);
