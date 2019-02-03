@@ -18,6 +18,7 @@
 #include "stmt.h"
 #include "name.h"
 #include "code.h"
+#include "functbl.h"
 #include "hashmap.h"
 #include "slist.h"
 #include "btree.h"
@@ -771,12 +772,18 @@ void Ebcscript_execute(ebcscript *Env)
 	    P = *(void **)CP;
 	    CP += sizeof(void *);
 	    {
+	      ebcscript_functionmap_entry *FInfo;
+	      void *CPReturn;
+
 	      /* ネイティブ関数かスクリプト関数か */
-	      if (0) {
-/*	        (*Mediator)(Env->Stack->Pointer);*/
+	      FInfo = Ebcscript_Functionmap_find(Env->FMap, P);
+	      if (FInfo->IsNative) {
+	        CPReturn = CP;
+	        (*(void (*)(void *))FInfo->CodeAddress)(Env->Stack->Pointer);
+	        CP = CPReturn;
 	      } else {
 	        Ebcscript_push_address(Env, CP);
-	        CP = P;
+	        CP = FInfo->CodeAddress;
 	      }
 	    }
 	    break;
@@ -784,12 +791,18 @@ void Ebcscript_execute(ebcscript *Env)
 	  case EBCSCRIPT_INSTRUCTION_CALL_PTR:
 	    Ebcscript_pop_address(Env, &P);
 	    {
+	      ebcscript_functionmap_entry *FInfo;
+	      void *CPReturn;
+
 	      /* ネイティブ関数かスクリプト関数か */
-	      if (0) {
-/*	        (*Mediator)(Env->Stack->Pointer);*/
+	      FInfo = Ebcscript_Functionmap_find(Env->FMap, P);
+	      if (FInfo->IsNative) {
+	        CPReturn = CP;
+	        (*(void (*)(void *))FInfo->CodeAddress)(Env->Stack->Pointer);
+	        CP = CPReturn;
 	      } else {
 	        Ebcscript_push_address(Env, CP);
-	        CP = P;
+	        CP = FInfo->CodeAddress;
 	      }
 	    }
 	    break;
@@ -881,6 +894,23 @@ boolean Ebcscript_addTrnsunit(ebcscript *Env, char *Filename)
 	} else {
 	  SList_addFront(Env->Trnsunits, (void *)TU);
 	  Env->IsResolved = false;	/* 名前の再解決を要求 */
+
+	  /* 全ての関数に対してダミー関数を割り当てる。関数表に登録 */
+	  {
+	    ebcscript_name *N;
+
+	    Hashmap_foreach(TU->NSVarFuncTypeEnum, N, {
+	      if (N->Kind == EBCSCRIPT_NAME_KIND_FUNCTION) {
+	        /* removeTrnsunit()でreleaseDummy()する */
+	        N->As.Function.FunctionID = Ebcscript_Dummyfunction_getDummy();
+
+	        /* 関数表に登録 */
+	        Ebcscript_Functionmap_add(Env->FMap,
+	          N->As.Function.FunctionID, N->As.Function.CodeAddress, false);
+	      }
+	    })
+	  }
+
 	}
 	fclose(yyin);
 	return B;
@@ -905,6 +935,22 @@ boolean Ebcscript_removeTrnsunit(ebcscript *Env, char *Filename)
 	   "warning: \"%s\" does not exist in a list of translation-unit\n",
 	   Filename);
 	  return false;
+	}
+
+	/* TUの記号表に登録されている関数を関数表から取り除く */
+	{
+	  ebcscript_name *N;
+
+	  Hashmap_foreach(TU->NSVarFuncTypeEnum, N, {
+	    if (N->Kind == EBCSCRIPT_NAME_KIND_FUNCTION) {
+	      /* 関数表から取り除く */
+	      Ebcscript_Functionmap_remove(Env->FMap,
+	                                             N->As.Function.FunctionID);
+
+	      /* ダミー関数を返却 */
+	      Ebcscript_Dummyfunction_releaseDummy(N->As.Function.FunctionID);
+	    }
+	  })
 	}
 
 	Ebcscript_deleteTrnsunit(TU);
@@ -934,7 +980,7 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	ebcscript_trnsunit *TU, *TU1;
 	ebcscript_unresolved *UR;
 	ebcscript_name **N0;
-	void *Address;
+	void *Address, *FunctionID;
 	int Addressing;
 	boolean B, IsFound;
 	slist_cell *P, *Q, *R;
@@ -948,6 +994,10 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	  TU = (ebcscript_trnsunit *)P->Datum;
 
 	  Hashmap_foreach(TU->NSVarFuncTypeEnum, N, {
+	    if (!Ebcscript_Trnsunit_findVarFuncTypeEnum_global(TU,
+	                                                       N->Identifier))
+	      continue;
+
 	    for (R = Env->Trnsunits->Head.Next; R != NULL; R = R->Next) {
 	      TU1 = (ebcscript_trnsunit *)R->Datum;
 
@@ -980,8 +1030,8 @@ boolean Ebcscript_resolve(ebcscript *Env)
 
 	      TU1 = (ebcscript_trnsunit *)R->Datum;
 
-	      if (TU == TU1)
-	        continue;
+/*	      if (TU == TU1)
+	        continue;*/	/* 2019.1.26 */
 
 	      if (!(N = Ebcscript_Trnsunit_findVarFuncTypeEnum_global(TU1,
 	                                                  UR->N->Identifier))) {
@@ -1069,6 +1119,7 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	      case EBCSCRIPT_NAME_KIND_FUNCTION:
 	        Address    = (*N0)->As.Function.CodeAddress;/* 絶対化済み */
 	        Addressing = (*N0)->As.Function.Addressing;
+	        FunctionID = (*N0)->As.Function.FunctionID;
 	        break;
 	      default:
 	        break;
@@ -1079,6 +1130,10 @@ boolean Ebcscript_resolve(ebcscript *Env)
 	    }
 	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE) {
 	      *(void **)UR->CP = Address;	/* UR->CPは絶対化済み */
+	    }
+	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_FUNCTIONID) {
+/*	      *(void **)UR->CP = Address;*/
+	      *(void **)UR->CP = FunctionID;
 	    }
 	    if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
 	      *(void **)UR->CP = Address;	/* UR->CPは絶対化済み */
@@ -1095,20 +1150,28 @@ boolean Ebcscript_call(ebcscript *Env, char *FuncName)
 {
 	static ebcscript_instruction Trap[] = {EBCSCRIPT_INSTRUCTION_EXIT, 0,};
 	ebcscript_trnsunit *TU;
+	void *FunctionID;
+	ebcscript_functionmap_entry *FInfo;
 
 	if (!Env->IsResolved) {
 	  return false;
 	}
 
-	/* 関数の入口アドレスをセット */
-	if (!(Env->CP = Ebcscript_address(Env, FuncName))) {
+	if (!(FunctionID = Ebcscript_address(Env, FuncName))) {
+	  return false;
+	}
+
+	if (!(FInfo = Ebcscript_Functionmap_find(Env->FMap, FunctionID))) {
 	  return false;
 	}
 
 	/* ネイティブ関数かスクリプト関数か */
-	if (0) {
-/*	  (*Mediator)(Env->Stack->Pointer);*/
+	if (FInfo->IsNative) {
+	  (*(void (*)(void *))FInfo->CodeAddress)(Env->Stack->Pointer);
 	} else {
+	  /* 関数の入口アドレスをセット */
+	  Env->CP = FInfo->CodeAddress;
+
 	  /* 復帰アドレスのプッシュ */
 	  Ebcscript_push_address(Env, Trap);
 
@@ -1165,7 +1228,8 @@ void *Ebcscript_address(ebcscript *Env, char *Name)
 	    Address = (*N)->As.Variable.Address;
 	    break;
 	  case EBCSCRIPT_NAME_KIND_FUNCTION:
-	    Address = (*N)->As.Function.CodeAddress;
+/*	    Address = (*N)->As.Function.CodeAddress;*/
+	    Address = (*N)->As.Function.FunctionID;
 	    break;
 	  case EBCSCRIPT_NAME_KIND_ENUMERATOR:
 	  case EBCSCRIPT_NAME_KIND_TYPEDEF:
@@ -1176,6 +1240,168 @@ void *Ebcscript_address(ebcscript *Env, char *Name)
 	return Address;
 }
 
+boolean Ebcscript_addVariable(
+ ebcscript *Env,
+ char *VarName, ebcscript_type *Type, void *Address
+)
+{
+	ebcscript_name *N;
+
+	if (Ebcscript_findVarFuncTypeEnum_global(Env, VarName)) {
+	  Ebcscript_log(
+	   "Ebcscript_addVariable(): error: \'%s\' has already defined\n",
+	   VarName);
+	  return false;
+	}
+
+	/* 名前を作成 */
+	N = Ebcscript_newName_variable(VarName);
+	N->As.Variable.TypeTree   = Type;
+	N->As.Variable.Address    = Address;
+	N->As.Variable.Addressing = EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE;
+	N->As.Variable.Linkage    = EBCSCRIPT_NAME_LINKAGE_EXTERNAL;
+	N->As.Variable.Nest       = 0;
+
+	/* 記号表に名前を登録 */
+	Hashmap_add(Env->TUNative->NSVarFuncTypeEnum, N->Identifier, N);
+
+	Env->IsResolved = false;
+	return true;
+}
+
+boolean Ebcscript_addFunction(
+ ebcscript *Env,
+ char *FuncName, ebcscript_type *Type, void *Address, void *Mediator
+)
+{
+	ebcscript_name *N, **N0;
+
+	if (Ebcscript_findVarFuncTypeEnum_global(Env, FuncName)) {
+	  Ebcscript_log(
+	   "Ebcscript_addFunction(): error: \'%s\' has already defined\n",
+	   FuncName);
+	  return false;
+	}
+
+	/* 名前を作成 */
+	N = Ebcscript_newName_function(FuncName);
+	N->As.Function.TypeTree    = Type;
+	N->As.Function.CodeAddress = Mediator;
+	N->As.Function.Addressing  = EBCSCRIPT_NAME_ADDRESSING_FUNCTIONID;
+	N->As.Function.Linkage     = EBCSCRIPT_NAME_LINKAGE_EXTERNAL;
+	N->As.Function.FunctionID  = Address;
+
+	/* 記号表に名前を登録 */
+	Hashmap_add(Env->TUNative->NSVarFuncTypeEnum, N->Identifier, N);
+
+	/* 関数表に登録 */
+	if (!Ebcscript_Functionmap_add(Env->FMap,
+	         N->As.Function.FunctionID, N->As.Function.CodeAddress, true)) {
+	  return false;
+	}
+
+	Env->IsResolved = false;
+	return true;
+}
+
+boolean Ebcscript_removeVariable(ebcscript *Env, char *VarName)
+{
+	ebcscript_name **N;
+
+	if (!(N = (ebcscript_name **)
+	             Hashmap_find(Env->TUNative->NSVarFuncTypeEnum, VarName))) {
+	  Ebcscript_log(
+	   "Ebcscript_removeVariable(): error: \'%s\' does not exist\n",
+	                                                               VarName);
+	  return false;
+	}
+	Hashmap_remove(Env->TUNative->NSVarFuncTypeEnum, (*N)->Identifier);
+	Ebcscript_deleteName(*N);
+	Env->IsResolved = false;
+	return true;
+}
+
+boolean Ebcscript_removeFunction(ebcscript *Env, char *FuncName)
+{
+	ebcscript_name **N;
+
+	if (!(N = (ebcscript_name **)
+	            Hashmap_find(Env->TUNative->NSVarFuncTypeEnum, FuncName))) {
+	  Ebcscript_log(
+	   "Ebcscript_removeFunction(): error: \'%s\' does not exist\n",
+	                                                              FuncName);
+	  return false;
+	}
+
+	/* 関数表から取り除く */
+	Ebcscript_Functionmap_remove(Env->FMap, (*N)->As.Function.FunctionID);
+
+	Hashmap_remove(Env->TUNative->NSVarFuncTypeEnum, (*N)->Identifier);
+	Ebcscript_deleteName(*N);
+
+	Env->IsResolved = false;
+	return true;
+}
+
+boolean Ebcscript_bindFunction(
+ ebcscript *Env,
+ char *Filename, char *FuncName, void *Mediator
+)
+{
+	slist_cell *P;
+	ebcscript_trnsunit *TU;
+	ebcscript_name **N;
+	void *FunctionID;
+
+	/* Filenameを探す */
+	for (P = Env->Trnsunits->Head.Next; P != NULL; P = P->Next) {
+	  TU = (ebcscript_trnsunit *)P->Datum;
+	  if (!strcmp(TU->Filename, Filename))
+	    break;
+	}
+	if (P == NULL) {
+	  Ebcscript_log(
+	   "Ebcscript_bindFunction(): "
+	   "warning: a translation-unit \"%s\" does not exist\n",
+	   Filename);
+	  return false;
+	}
+
+	if (!(N = (ebcscript_name **)
+	                       Hashmap_find(TU->NSVarFuncTypeEnum, FuncName))) {
+	  Ebcscript_log(
+	   "Ebcscript_bindFunction(): "
+	   "warning: a function \"%s\" does not exist\n",
+	   FuncName);
+	  return false;
+	}
+
+	if ((*N)->Kind != EBCSCRIPT_NAME_KIND_FUNCTION) {
+	  Ebcscript_log(
+	   "Ebcscript_bindFunction(): "
+	   "warning: a kind of name \"%s\" is not function\n",
+	   FuncName);
+	  return false;
+	}
+
+	Ebcscript_Functionmap_remove(
+	 Env->FMap,
+	 FunctionID = (*N)->As.Function.FunctionID
+	);
+
+	if (Ebcscript_Dummyfunction_isDummy(FunctionID)) {
+	  Ebcscript_Dummyfunction_releaseDummy(FunctionID);
+	}
+
+	Ebcscript_Functionmap_add(
+	 Env->FMap,
+	 (*N)->As.Function.FunctionID = Mediator,
+	 (*N)->As.Function.CodeAddress,
+	 false
+	);
+	return true;
+}
+
 void Ebcscript_setFplog(FILE *Fp)
 {
 	Hashmap_Fplog =
@@ -1183,6 +1409,7 @@ void Ebcscript_setFplog(FILE *Fp)
 	BTree_Fplog =
 	Ebcscript_Name_Fplog =
 	Ebcscript_Code_Fplog =
+	Ebcscript_Functionmap_Fplog =
 	Ebcscript_Parser_Declaration_Fplog =
 	Ebcscript_Parser_Expression_Fplog =
 	Ebcscript_Parser_Initializer_Fplog =
@@ -1196,6 +1423,7 @@ void Ebcscript_setFplog(FILE *Fp)
 	BTree_log =
 	Ebcscript_Name_log =
 	Ebcscript_Code_log =
+	Ebcscript_Functionmap_log =
 	Ebcscript_Parser_Declaration_log =
 	Ebcscript_Parser_Expression_log =
 	Ebcscript_Parser_Initializer_log =
@@ -1209,6 +1437,7 @@ void Ebcscript_setFplog(FILE *Fp)
 	BTree_exit =
 	Ebcscript_Name_exit =
 	Ebcscript_Code_exit =
+	Ebcscript_Functionmap_exit =
 	Ebcscript_Parser_Declaration_exit =
 	Ebcscript_Parser_Expression_exit =
 	Ebcscript_Parser_Initializer_exit =
@@ -1224,9 +1453,11 @@ ebcscript *newEbcscript(int StackSize)
 
 	Env = Ebcscript_malloc(sizeof(ebcscript));
 	Env->Trnsunits = newSList();
-/*	Env->Native = Ebcscript_newTrnsunit("$native");
-	SList_addFront(Env->Trnsunits, Env->Native);*/
+	SList_addFront(Env->Trnsunits,
+	 Env->TUNative = Ebcscript_newTrnsunit("$native")
+	);
 	Env->IsResolved = false;
+	Env->FMap = Ebcscript_newFunctionmap();
 	Env->Stack = Ebcscript_newStack(StackSize);
 	Env->BP = Env->Stack->Head + Env->Stack->Size;
 	return Env;
@@ -1235,6 +1466,7 @@ ebcscript *newEbcscript(int StackSize)
 void deleteEbcscript(ebcscript *Env)
 {
 	Ebcscript_deleteStack(Env->Stack);
+	Ebcscript_deleteFunctionmap(Env->FMap);
 	SList_clear(Env->Trnsunits, (void (*)(void *))Ebcscript_deleteTrnsunit);
 	deleteSList(Env->Trnsunits);
 	Ebcscript_free(Env);
@@ -1280,6 +1512,8 @@ int main(int argc, char *argv[])
 	printf("BTree_MallocTotal = %d\n", BTree_MallocTotal);
 	printf("Ebcscript_Name_MallocTotal = %d\n", Ebcscript_Name_MallocTotal);
 	printf("Ebcscript_Code_MallocTotal = %d\n", Ebcscript_Code_MallocTotal);
+	printf("Ebcscript_Functionmap_MallocTotal = %d\n",
+	                                     Ebcscript_Functionmap_MallocTotal);
 	printf("Ebcscript_Parser_Declaration_MallocTotal = %d\n",
 	                              Ebcscript_Parser_Declaration_MallocTotal);
 	printf("Ebcscript_Parser_Expression_MallocTotal = %d\n",
