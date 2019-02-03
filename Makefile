@@ -5,12 +5,12 @@ CFLAGS  := -c
 RM      := rm -f
 TARGET  := ebcscrip.a
 OBJS    := ebcscrip.o trnsunit.o parser.o decl.o expr.o init.o stmt.o \
-	parse.tab.o lex.yy.o name.o code.o hashmap.o btree.o slist.o
+	parse.tab.o lex.yy.o name.o code.o functbl.o hashmap.o btree.o slist.o
 
 $(TARGET): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $?
 
-ebcscrip.o: ebcscrip.c ebcscrip.h trnsunit.h parser.h decl.h expr.h init.h stmt.h name.h code.h hashmap.h slist.h btree.h boolean.h
+ebcscrip.o: ebcscrip.c ebcscrip.h trnsunit.h parser.h decl.h expr.h init.h stmt.h name.h code.h functbl.h hashmap.h slist.h btree.h boolean.h
 	$(CC) $(CFLAGS) $<
 
 trnsunit.o: trnsunit.c trnsunit.h name.h code.h slist.h hashmap.h boolean.h
@@ -47,6 +47,9 @@ name.o: name.c name.h hashmap.h slist.h boolean.h
 	$(CC) $(CFLAGS) $<
 
 code.o: code.c code.h boolean.h
+	$(CC) $(CFLAGS) $<
+
+functbl.o: functbl.c functbl.h boolean.h
 	$(CC) $(CFLAGS) $<
 
 hashmap.o: hashmap.c hashmap.h boolean.h
