@@ -2642,6 +2642,7 @@ declaration
 	          N->As.Function.CodeAddress = NULL;
 	          N->As.Function.Addressing =
 	                                    EBCSCRIPT_NAME_ADDRESSING_UNDEFINED;
+	          N->As.Function.FunctionID = NULL;
 	        }
 
 	        /* 名前の重複チェック */
@@ -2726,6 +2727,7 @@ declaration
 	            N->As.Function.CodeAddress = NULL;
 	            N->As.Function.Addressing =
 	                                    EBCSCRIPT_NAME_ADDRESSING_UNDEFINED;
+	            N->As.Function.FunctionID = NULL;
 	          }
 	          if (Prs->Nest > 0) {
 	            log_error1("invalid storage class for function \'%s\'\n",
@@ -2796,6 +2798,7 @@ declaration
 	          N->As.Function.CodeAddress = NULL;
 	          N->As.Function.Addressing =
 	                                    EBCSCRIPT_NAME_ADDRESSING_UNDEFINED;
+	          N->As.Function.FunctionID = NULL;
 	        }
 
 	        /* 名前の重複チェック */
@@ -5107,6 +5110,8 @@ function_definition
 	                                  (void *)(Prs->TU->CP - Prs->TU->Code);
 	        $2->As.Function.Addressing = EBCSCRIPT_NAME_ADDRESSING_ONCODE;
 	        $2->As.Function.Linkage = EBCSCRIPT_NAME_LINKAGE_EXTERNAL;
+	        $2->As.Function.FunctionID = NULL;
+/*	        $2->As.Function.FunctionID = getDummy();*/
 
 	        /* 記号表へ登録 */
 	        if (N0 = Ebcscript_Parser_Blockstack_findVarFuncTypeEnum(
@@ -5137,6 +5142,8 @@ function_definition
 	                               (void *)( Prs->TU->CP - Prs->TU->Code);
 	        $2->As.Function.Addressing = EBCSCRIPT_NAME_ADDRESSING_ONCODE;
 	        $2->As.Function.Linkage = EBCSCRIPT_NAME_LINKAGE_INTERNAL;
+	        $2->As.Function.FunctionID = NULL;
+/*	        $2->As.Function.FunctionID = getDummy();*/
 
 	        /* 記号表へ登録 */
 	        if (N0 = Ebcscript_Parser_Blockstack_findVarFuncTypeEnum(
@@ -5166,6 +5173,8 @@ function_definition
 	                                (void *)(Prs->TU->CP - Prs->TU->Code);
 	        $2->As.Function.Addressing = EBCSCRIPT_NAME_ADDRESSING_ONCODE;
 	        $2->As.Function.Linkage = EBCSCRIPT_NAME_LINKAGE_EXTERNAL;
+	        $2->As.Function.FunctionID = NULL;
+/*	        $2->As.Function.FunctionID = getDummy();*/
 
 	        /* 記号表へ登録 */
 	        if (N0 = Ebcscript_Parser_Blockstack_findVarFuncTypeEnum(
