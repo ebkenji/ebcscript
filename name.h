@@ -157,6 +157,8 @@ enum ebcscript_name_kind {
 enum ebcscript_name_addressing {
 	EBCSCRIPT_NAME_ADDRESSING_UNDEFINED,
 	EBCSCRIPT_NAME_ADDRESSING_ABSOLUTE,
+	EBCSCRIPT_NAME_ADDRESSING_FUNCTIONID,
+					/* コードセグメント上の絶対アドレス */
 	EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME,
 	EBCSCRIPT_NAME_ADDRESSING_ONCODE,
 };
@@ -188,6 +190,7 @@ struct ebcscript_name {
 	    enum ebcscript_name_addressing Addressing;
 	    enum ebcscript_name_linkage Linkage;
 	    int Nest;	/* -1:未設定, 0:大域的, 1:局所的、引数, 2<:ブロック */
+/*	    void *VariableID;*/
 	  } Variable;
 
 	  struct ebcscript_name_function {
@@ -195,6 +198,7 @@ struct ebcscript_name {
 	    void *CodeAddress;
 	    enum ebcscript_name_addressing Addressing;
 	    enum ebcscript_name_linkage Linkage;
+	    void *FunctionID;
 	  } Function;
 
 	  struct ebcscript_name_enumerator {
@@ -318,6 +322,11 @@ ebcscript_type *Ebcscript_newType_union(void);
 ebcscript_type *Ebcscript_newType_enumeration(void);
 ebcscript_type *Ebcscript_newType_enumerator(void);
 
+ebcscript_type *Ebcscript_makeType_function(
+                                  ebcscript_type *ReturnValue, int NParam, ...);
+ebcscript_type *Ebcscript_makeType_pointer(ebcscript_type *Value);
+ebcscript_type *Ebcscript_makeType_array(ebcscript_type *Value);
+
 ebcscript_name *Ebcscript_Type_Function_findParameter(
                          struct ebcscript_type_function *TF, const char *Key);
 boolean Ebcscript_Type_Function_addParameter(
@@ -368,6 +377,7 @@ ebcscript_name *Ebcscript_newName_struct(char *);
 ebcscript_name *Ebcscript_newName_union(char *);
 ebcscript_name *Ebcscript_newName_enumeration(char *);
 ebcscript_name *Ebcscript_newName_enumerator(char *);
+ebcscript_name *Ebcscript_newName_function(char *);
 
 /* TypeTreeは消さない。 */
 void Ebcscript_deleteName(ebcscript_name *);
