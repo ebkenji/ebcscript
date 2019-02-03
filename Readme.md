@@ -2,7 +2,7 @@
 A simple C library for interpreting C sources.
 
 ## Description
-Ebcscript is a library which adds a function of C interpreter for your C program.
+Ebcscript is a library that provides a function of C interpreter for your C program.
 
 ## Requirements
 Ebcscript requires the following to build:
