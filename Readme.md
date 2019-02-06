@@ -18,8 +18,8 @@ parse.y: conflicts: 1 shift/reduce
 
 To run an example:
 ```
-$ gcc example.c ebcscrip.a -o example
-$ ./example
+$ gcc example1.c ebcscrip.a -o example1
+$ ./example1
 5! = 120
 ```
 
@@ -27,7 +27,7 @@ $ ./example
 See the file "example1.c".
 
 example1.c:
-```
+```c
 #include <stdio.h>
 #include "ebcscrip.h"
 
@@ -59,7 +59,7 @@ int main(void)
 ```
 
 factoria.c:
-```
+```c
 int factorial(char n)
 {
   return (n <= 1) ? 1 : n * factorial(n - 1);
