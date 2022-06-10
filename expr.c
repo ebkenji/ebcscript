@@ -1127,32 +1127,34 @@ void Ebcscript_Parser_gencode_expr_rv(
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_LT:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Lt.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Lt.Right);
-	    gencode_op_numeric_ptr(LT, E->TypeTree)
+	    /* 演算の結果はEの型(=int)だが、演算はLeftまたはRightの型で行う */
+/*	    gencode_op_numeric_ptr(LT, E->TypeTree)*/
+	    gencode_op_numeric_ptr(LT, E->As.Lt.Left->TypeTree)
 	    break;
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_GT:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Gt.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Gt.Right);
-	    gencode_op_numeric_ptr(GT, E->TypeTree)
+	    gencode_op_numeric_ptr(GT, E->As.Gt.Left->TypeTree)
 	    break;
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_LE:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Le.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Le.Right);
-	    gencode_op_numeric_ptr(LE, E->TypeTree)
+	    gencode_op_numeric_ptr(LE, E->As.Le.Left->TypeTree)
 	    break;
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_GE:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Ge.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Ge.Right);
-	    gencode_op_numeric_ptr(GE, E->TypeTree)
+	    gencode_op_numeric_ptr(GE, E->As.Ge.Left->TypeTree)
 	    break;
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_EQ:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Eq.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Eq.Right);
-	    gencode_op_numeric_ptr(EQ, E->TypeTree)
+	    gencode_op_numeric_ptr(EQ, E->As.Eq.Left->TypeTree)
 	    break;
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_NE:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Ne.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Ne.Right);
-	    gencode_op_numeric_ptr(NE, E->TypeTree)
+	    gencode_op_numeric_ptr(NE, E->As.Ne.Left->TypeTree)
 	    break;
 
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_AND:

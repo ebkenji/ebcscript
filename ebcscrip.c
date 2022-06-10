@@ -294,8 +294,8 @@ void Ebcscript_execute(ebcscript *Env)
 #define case_push_lmem(T, Type)						\
 	  case EBCSCRIPT_INSTRUCTION_PUSH_LMEM_ ## T:			\
 	    Ebcscript_push_ ## Type(Env,				\
-	                             *(Type *)(BP + (int)*(void **)CP));\
-	    CP += sizeof(void *);					\
+	                              *(Type *)(BP + *(ptrdiff_t *)CP));\
+	    CP += sizeof(ptrdiff_t);					\
 /*	    SP -= sizeof(Type);						\
 	    *(Type *)SP = *(Type *)(BP + (long)*(void **)CP);		\
 	    CP += sizeof(void *);	*/				\
@@ -313,8 +313,8 @@ void Ebcscript_execute(ebcscript *Env)
 #define case_pop_lmem(T, Type)						\
 	  case EBCSCRIPT_INSTRUCTION_POP_LMEM_ ## T:			\
 	    Ebcscript_pop_ ## Type(Env,					\
-	                              (Type *)(BP + (int)*(void **)CP));\
-	    CP += sizeof(void *);					\
+	                               (Type *)(BP + *(ptrdiff_t *)CP));\
+	    CP += sizeof(ptrdiff_t);					\
 /*	    *(Type *)(BP + (long)*(void **)CP) = *(Type *)SP;		\
 	    SP += sizeof(Type);						\
 	    CP += sizeof(void *);	*/				\
@@ -435,8 +435,8 @@ void Ebcscript_execute(ebcscript *Env)
 	  case EBCSCRIPT_INSTRUCTION_PUSH_LMEM_OBJECT:
 	    I = *(int *)CP;	/* サイズ */
 	    CP += sizeof(int);
-	    P = BP + (int)*(void **)CP;
-	    CP += sizeof(void *);
+	    P = BP + *(ptrdiff_t *)CP;
+	    CP += sizeof(ptrdiff_t);
 	    if (SP - I < Env->Stack->Head) {
 	      Ebcscript_log("Ebcscript_execute(): error: stack overflow\n");
 	      Ebcscript_exit(1);
@@ -461,7 +461,7 @@ void Ebcscript_execute(ebcscript *Env)
 	  case EBCSCRIPT_INSTRUCTION_POP_LMEM_OBJECT:
 	    I = *(int *)CP;	/* サイズ */
 	    CP += sizeof(int);
-	    P = BP + (int)*(void **)CP;
+	    P = BP + *(ptrdiff_t *)CP;
 	    CP += sizeof(void *);
 	    if (SP + I > Env->Stack->Head + Env->Stack->Size) {
 	      Ebcscript_log("Ebcscript_execute(): error: stack overrun\n");
@@ -711,9 +711,9 @@ void Ebcscript_execute(ebcscript *Env)
 	  case EBCSCRIPT_INSTRUCTION_JMPT_ ## T:			\
 	    Ebcscript_pop_ ## Type(Env, &(T));				\
 	    if (T) {							\
-	      CP = CP + *(int *)CP;					\
+	      CP = CP + *(ptrdiff_t *)CP;				\
 	    } else {							\
-	      CP += sizeof(int);					\
+	      CP += sizeof(ptrdiff_t);					\
 	    }								\
 /*	    if (*(Type *)SP) {						\
 	      CP = CP + *(int *)CP;					\
@@ -727,9 +727,9 @@ void Ebcscript_execute(ebcscript *Env)
 	  case EBCSCRIPT_INSTRUCTION_JMPF_ ## T:			\
 	    Ebcscript_pop_ ## Type(Env, &(T));				\
 	    if (!T) {							\
-	      CP = CP + *(int *)CP;					\
+	      CP = CP + *(ptrdiff_t *)CP;				\
 	    } else {							\
-	      CP += sizeof(int);					\
+	      CP += sizeof(ptrdiff_t);					\
 	    }								\
 /*	    if (!(*(Type *)SP)) {					\
 	      CP = CP + *(int *)CP;					\
@@ -764,7 +764,7 @@ void Ebcscript_execute(ebcscript *Env)
 	  case_jump_f(P, address)
 
 	  case EBCSCRIPT_INSTRUCTION_JMP:
-	    CP = CP + *(int *)CP;
+	    CP = CP + *(ptrdiff_t *)CP;
 	    break;
 
 	  /* 呼び出し・復帰 */
@@ -1181,6 +1181,7 @@ boolean Ebcscript_call(ebcscript *Env, char *FuncName)
 	  while (*(ebcscript_instruction *)Env->CP !=
 	                                           EBCSCRIPT_INSTRUCTION_EXIT) {
 	    Ebcscript_execute(Env);
+/*	    printf("%p\n", Env->CP);*/
 	  }
 	}
 	return true;

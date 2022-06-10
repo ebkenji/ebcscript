@@ -1707,7 +1707,7 @@ equality_expression
 
 	      E = Ebcscript_Parser_newExpression();
 	      E->Kind = EBCSCRIPT_PARSER_EXPRESSION_KIND_NE;
-	      E->TypeTree = TE;
+	      E->TypeTree = Ebcscript_Type_Int();
 	      E->IsConstant = $1->IsConstant && $3->IsConstant;
 	      E->As.Ne.Left = $1;
 	      E->As.Ne.Right = $3;
