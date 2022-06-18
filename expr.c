@@ -509,7 +509,7 @@ void Ebcscript_Parser_gencode_expr_rv(
 	                for (; Nest < Prs->Nest; Nest++) {
 	                  store_instruction(EBCSCRIPT_INSTRUCTION_LOAD_P)
 	                }
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N);
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	                gencode_op_storage(LOAD, N->As.Variable.TypeTree)
@@ -528,7 +528,7 @@ void Ebcscript_Parser_gencode_expr_rv(
 	            if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
 	              if (Prs->Nest - Nest == 0) {
 	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_BP)
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N);
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	              }
@@ -537,7 +537,7 @@ void Ebcscript_Parser_gencode_expr_rv(
 	                for (; Nest < Prs->Nest; Nest++) {
 	                  store_instruction(EBCSCRIPT_INSTRUCTION_LOAD_P)
 	                }
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N);
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	              }
@@ -566,7 +566,7 @@ void Ebcscript_Parser_gencode_expr_rv(
 	                for (; Nest < Prs->Nest; Nest++) {
 	                  store_instruction(EBCSCRIPT_INSTRUCTION_LOAD_P)
 	                }
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N);
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	                store_instruction(EBCSCRIPT_INSTRUCTION_LOAD_OBJECT)
@@ -734,8 +734,8 @@ void Ebcscript_Parser_gencode_expr_rv(
 
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_DOT:
 	    Ebcscript_Parser_gencode_expr_lv(Prs, E->As.Dot.Child);
-	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
-	    store_int(E->As.Dot.Offset)
+	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
+	    store_long(E->As.Dot.Offset)
 	    store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	    switch (E->TypeTree->Kind) {
 	      case EBCSCRIPT_TYPE_KIND_VOID:
@@ -781,8 +781,8 @@ void Ebcscript_Parser_gencode_expr_rv(
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_ARROW:	/* -> */
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Arrow.Child);
 								/*右辺値*/
-	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
-	    store_int(E->As.Arrow.Offset)
+	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
+	    store_long(E->As.Arrow.Offset)
 	    store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	    switch (E->TypeTree->Kind) {
 	      case EBCSCRIPT_TYPE_KIND_VOID:
@@ -1364,7 +1364,7 @@ void Ebcscript_Parser_gencode_expr_lv(
 	            if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
 	              if (Prs->Nest - Nest == 0) {
 	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_BP)
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N)
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	              }
@@ -1373,7 +1373,7 @@ void Ebcscript_Parser_gencode_expr_lv(
 	                for (; Nest < Prs->Nest; Nest++) {
 	                  store_instruction(EBCSCRIPT_INSTRUCTION_LOAD_P)
 	                }
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N)
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	              }
@@ -1403,7 +1403,7 @@ void Ebcscript_Parser_gencode_expr_lv(
 	            if (Addressing == EBCSCRIPT_NAME_ADDRESSING_ONSTACKFRAME) {
 	              if (Prs->Nest - Nest == 0) {
 	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_BP)
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N)
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	              }
@@ -1412,7 +1412,7 @@ void Ebcscript_Parser_gencode_expr_lv(
 	                for (; Nest < Prs->Nest; Nest++) {
 	                  store_instruction(EBCSCRIPT_INSTRUCTION_LOAD_P)
 	                }
-	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	                store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	                store_address_n(BS, N)
 	                store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	              }
@@ -1473,25 +1473,25 @@ void Ebcscript_Parser_gencode_expr_lv(
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_INDEX:
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Index.Left);
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Index.Right);
-	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
+	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
 	    Size = Ebcscript_Type_getSize(E->TypeTree);
-	    store_int(Size)
-	    store_instruction(EBCSCRIPT_INSTRUCTION_MUL_I)
+	    store_long(Size)
+	    store_instruction(EBCSCRIPT_INSTRUCTION_MUL_L)
 	    store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	    break;
 
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_DOT:
 	    Ebcscript_Parser_gencode_expr_lv(Prs, E->As.Dot.Child);
-	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
-	    store_int(E->As.Dot.Offset)
+	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
+	    store_long(E->As.Dot.Offset)
 	    store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	    break;
 
 	  case EBCSCRIPT_PARSER_EXPRESSION_KIND_ARROW:	/* -> */
 	    Ebcscript_Parser_gencode_expr_rv(Prs, E->As.Arrow.Child);
 								/*右辺値*/
-	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_I)
-	    store_int(E->As.Arrow.Offset)
+	    store_instruction(EBCSCRIPT_INSTRUCTION_PUSH_IMM_L)
+	    store_long(E->As.Arrow.Offset)
 	    store_instruction(EBCSCRIPT_INSTRUCTION_ADD_P)
 	    break;
 

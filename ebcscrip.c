@@ -614,15 +614,15 @@ void Ebcscript_execute(ebcscript *Env)
 	  case_op1_numeric(NEG, -)
 
 	  case EBCSCRIPT_INSTRUCTION_ADD_P:
-	    Ebcscript_pop_int(Env, &I2);
+	    Ebcscript_pop_long(Env, &L2);
 	    Ebcscript_pop_address(Env, &P1);
-	    Ebcscript_push_address(Env, P1 + I2);
+	    Ebcscript_push_address(Env, P1 + L2);
 	    break;
 
 	  case EBCSCRIPT_INSTRUCTION_SUB_P:
-	    Ebcscript_pop_int(Env, &I2);
+	    Ebcscript_pop_long(Env, &L2);
 	    Ebcscript_pop_address(Env, &P1);
-	    Ebcscript_push_address(Env, P1 - I2);
+	    Ebcscript_push_address(Env, P1 - L2);
 	    break;
 
 	  case EBCSCRIPT_INSTRUCTION_INC_P:
